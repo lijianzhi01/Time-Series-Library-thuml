@@ -1,0 +1,17 @@
+py .\run_longExp.py `
+--is_training 1 `
+--model_id test `
+--model PatchTST `
+--data custom `
+--root_path ./data/container_load `
+--data_path metrics-v2.csv `
+--target container_cpu_system_seconds_total `
+--seq_len 20 `
+--label_len 10 `
+--pred_len 10 `
+--enc_in 50 `
+--dec_in 50 `
+--c_out 50 `
+--itr 1 `
+--train_epochs 10 `
+--batch_size 32
