@@ -1,10 +1,10 @@
-python run.py\
---task_name long_term_forecast\
+python run.py \
+--task_name long_term_forecast \
 --is_training 1 \
---model_id test
+--model_id test \
 --model PatchTST \
---data custom\
---root_path ./data/container_load\
+--data custom \
+--root_path ./data/container_load \
 --data_path metrics-v2.csv \
 --target container_cpu_system_seconds_total \
 --seq_len 20 \
