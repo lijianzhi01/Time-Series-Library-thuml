@@ -453,3 +453,51 @@ class WaveletAttention(nn.Module):
         x[..., ::2, :, :] = x_e
         x[..., 1::2, :, :] = x_o
         return x
+
+class FourierCrossAttentionW(nn.Module):
+    def __init__(self, in_channels, out_channels, seq_len_q, seq_len_kv, modes=16, activation='tanh',
+                 mode_select_method='random'):
+        super(FourierCrossAttentionW, self).__init__()
+        print('corss fourier correlation used!')
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.modes1 = modes
+        self.activation = activation
+
+    def forward(self, q, k, v, mask=None, tau=None, delta=None):
+        B, L, E, H = q.shape
+
+        xq = q.permute(0, 3, 2, 1)  # size = [B, H, E, L] torch.Size([3, 8, 64, 512])
+        xk = k.permute(0, 3, 2, 1)
+        xv = v.permute(0, 3, 2, 1)
+        self.index_q = list(range(0, min(int(L // 2), self.modes1)))
+        self.index_k_v = list(range(0, min(int(xv.shape[3] // 2), self.modes1)))
+
+        # Compute Fourier coefficients
+        xq_ft_ = torch.zeros(B, H, E, len(self.index_q), device=xq.device, dtype=torch.cfloat)
+        xq_ft = torch.fft.rfft(xq, dim=-1)
+        for i, j in enumerate(self.index_q):
+            xq_ft_[:, :, :, i] = xq_ft[:, :, :, j]
+
+        xk_ft_ = torch.zeros(B, H, E, len(self.index_k_v), device=xq.device, dtype=torch.cfloat)
+        xk_ft = torch.fft.rfft(xk, dim=-1)
+        for i, j in enumerate(self.index_k_v):
+            xk_ft_[:, :, :, i] = xk_ft[:, :, :, j]
+        xqk_ft = (torch.einsum("bhex,bhey->bhxy", xq_ft_, xk_ft_))
+        if self.activation == 'tanh':
+            xqk_ft = xqk_ft.tanh()
+        elif self.activation == 'softmax':
+            xqk_ft = torch.softmax(abs(xqk_ft), dim=-1)
+            xqk_ft = torch.complex(xqk_ft, torch.zeros_like(xqk_ft))
+        else:
+            raise Exception('{} actiation function is not implemented'.format(self.activation))
+        xqkv_ft = torch.einsum("bhxy,bhey->bhex", xqk_ft, xk_ft_)
+
+        xqkvw = xqkv_ft
+        out_ft = torch.zeros(B, H, E, L // 2 + 1, device=xq.device, dtype=torch.cfloat)
+        for i, j in enumerate(self.index_q):
+            out_ft[:, :, :, j] = xqkvw[:, :, :, i]
+
+        out = torch.fft.irfft(out_ft / self.in_channels / self.out_channels, n=xq.size(-1)).permute(0, 3, 2, 1)
+        # size = [B, L, H, E]
+        return (out, None)
