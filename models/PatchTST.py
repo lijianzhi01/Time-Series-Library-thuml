@@ -57,8 +57,6 @@ class Model(nn.Module):
                                          out_channels=configs.d_model,
                                          seq_len_q=configs.seq_len,
                                          seq_len_kv=configs.seq_len,
-                                         ich=configs.d_model,
-                                         T=1,
                                          activation=configs.activation), 
                         # WaveletAttention(in_channels=configs.d_model,
                         #                  out_channels=configs.d_model,
