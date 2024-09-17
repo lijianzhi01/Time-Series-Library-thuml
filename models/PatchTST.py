@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from layers.Transformer_EncDec import Encoder, EncoderLayer
-from layers.SelfAttention_Family import FullAttention, AttentionLayer
+from layers.SelfAttention_Family import WaveletAttention, AttentionLayer
 from layers.Embed import PatchEmbedding
 
 class Transpose(nn.Module):
@@ -53,8 +53,13 @@ class Model(nn.Module):
             [
                 EncoderLayer(
                     AttentionLayer(
-                        FullAttention(False, configs.factor, attention_dropout=configs.dropout,
-                                      output_attention=configs.output_attention), configs.d_model, configs.n_heads),
+                        WaveletAttention(in_channels=configs.d_model,
+                                         out_channels=configs.d_model,
+                                         seq_len_q=configs.seq_len,
+                                         seq_len_kv=configs.seq_len,
+                                         ich=configs.d_model,
+                                         T=1,
+                                         activation=configs.activation), configs.d_model, configs.n_heads),
                     configs.d_model,
                     configs.d_ff,
                     dropout=configs.dropout,
