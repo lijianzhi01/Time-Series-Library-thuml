@@ -353,7 +353,7 @@ class WaveletAttention(nn.Module):
 
         self.output_attention = output_attention
 
-    def forward(self, q, k, v, mask=None):
+    def forward(self, q, k, v, mask=None, tao=None, delta=None):
         B, N, H, E = q.shape  # (B, N, H, E) torch.Size([3, 768, 8, 2])
         _, S, _, _ = k.shape  # (B, S, H, E) torch.Size([3, 96, 8, 2])
 
