@@ -51,7 +51,7 @@ class DSAttention(nn.Module):
 
 class FullAttention(nn.Module):
     def __init__(self, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
-        super(MinusAttention, self).__init__()
+        super(FullAttention, self).__init__()
         self.scale = scale
         self.mask_flag = mask_flag
         self.output_attention = output_attention
@@ -236,7 +236,7 @@ class BilinearAttention(nn.Module):
         
 class MinusAttention(nn.Module):
     def __init__(self, d_model, n_heads=1, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
-        super(FullAttention, self).__init__()
+        super(MinusAttention, self).__init__()
         self.scale = scale
         self.mask_flag = mask_flag
         self.output_attention = output_attention
@@ -256,7 +256,7 @@ class MinusAttention(nn.Module):
         B, L, H, E = queries.shape
         _, S, _, D = values.shape
         q = queries.transpose(1,2)                      # [B, H, L, d_k]
-        k = keys.permute(0,2,3,1)                       # [B, H, d_k, S]
+        k = keys.permute(0,2,1,3)                       # [B, H, d_k, S]
         v = values.transpose(1,2)                       # [B, H, S, d_k]
         scale = self.scale or 1. / sqrt(E)
 
