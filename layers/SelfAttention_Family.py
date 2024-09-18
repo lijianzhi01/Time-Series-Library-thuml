@@ -97,11 +97,7 @@ class WeightedAverageAttention(nn.Module):
         bilinear_out, _ = self.bilinear_attention(queries, keys, values, attn_mask)
         minus_out, _ = self.minus_attention(queries, keys, values, attn_mask)
         print(minus_out.shape)
-
-        # Weighted Average Attenntion
-        attention_outputs = torch.stack([dot_product_out, concat_out, bilinear_out, minus_out])  # [4, B, L, N, S]
-        weights = F.softmax(self.weights, dim=0)
-        weighted_output = torch.tensordot(weights, attention_outputs, dims=0).squeeze(0)  # [B, L, N, S]
+        weighted_output = self.weights[0] * dot_product_out + self.weights[1] * concat_out + self.weights[2] * bilinear_out + self.weights[3] * minus_out
         print(weighted_output.shape)
         return weighted_output, []
         
