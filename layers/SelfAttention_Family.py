@@ -77,7 +77,204 @@ class FullAttention(nn.Module):
             return V.contiguous(), A
         else:
             return V.contiguous(), None
+        
+class WeightedAverageAttention(nn.Module):
+    def __init__(self, d_model, n_heads=1, attention_dropout=0.1):
+        super(WeightedAverageAttention, self).__init__()
+        
+        # Four kinds of Attention
+        self.dot_product_attention = DotProductAttention(mask_flag=True, attention_dropout=attention_dropout, output_attention=False)
+        self.concat_attention = ConcatAttention(d_model, n_heads, mask_flag=True, attention_dropout=attention_dropout, output_attention=False)
+        self.bilinear_attention = BilinearAttention(d_model, n_heads, mask_flag=True, attention_dropout=attention_dropout, output_attention=False)
+        self.minus_attention = MinusAttention(d_model, n_heads, mask_flag=True, attention_dropout=attention_dropout, output_attention=False)
 
+        self.weights = nn.Parameter(torch.ones(4) / 4)
+
+    def forward(self, queries, keys, values, attn_mask):
+        # Ouput of each Attention
+        dot_product_out, _ = self.dot_product_attention(queries, keys, values, attn_mask)
+        concat_out, _ = self.concat_attention(queries, keys, values, attn_mask)
+        bilinear_out, _ = self.bilinear_attention(queries, keys, values, attn_mask)
+        minus_out, _ = self.minus_attention(queries, keys, values, attn_mask)
+
+        # Weighted Average Attenntion
+        attention_outputs = torch.stack([dot_product_out, concat_out, bilinear_out, minus_out])  # [4, B, L, H, d_v]
+        weights = F.softmax(self.weights, dim=0).unsqueeze(0)  # [1, 4]
+        weighted_output = (weights @ attention_outputs).squeeze(0)  # [B, L, H, d_v]
+
+        return weighted_output
+        
+class DotProductAttention(nn.Module):
+    def __init__(self, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
+        super(FullAttention, self).__init__()
+        self.scale = scale
+        self.mask_flag = mask_flag
+        self.output_attention = output_attention
+        self.dropout = nn.Dropout(attention_dropout)
+
+    def forward(self, queries, keys, values, attn_mask, tau=None, delta=None):
+        '''
+        Input shape:
+            q               : [B, L, H, d_k]
+            k               : [B, S, H, d_k]
+            v               : [B, S, H, d_k]
+        Output shape:
+            output  :   [B, L, H, d_v]
+            weights :   [B, H, L, S]
+            scores  :   [B, H, L, S]
+        '''
+        B, L, H, E = queries.shape
+        _, S, _, D = values.shape
+        q = queries.transpose(1,2)                      # [B, H, L, d_k]
+        k = keys.permute(0,2,3,1)                       # [B, H, d_k, S]
+        v = values.transpose(1,2)                       # [B, H, S, d_k]
+        scale = self.scale or 1. / sqrt(E)
+
+        scores = torch.matmul(q, k) * scale
+
+        if self.mask_flag:
+            if attn_mask is None:
+                attn_mask = TriangularCausalMask(B, L, device=queries.device)
+
+            scores.masked_fill_(attn_mask.mask, -np.inf)
+
+        weights = self.dropout(torch.softmax(scale * scores, dim=-1))
+        output = torch.matmul(weights, v).permute(0, 2, 1, 3)
+
+        if self.output_attention:
+            return output.contiguous(), weights
+        else:
+            return output.contiguous(), None
+        
+class ConcatAttention(nn.Module):
+    def __init__(self, d_model, n_heads=1, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
+        super(FullAttention, self).__init__()
+        self.scale = scale
+        self.mask_flag = mask_flag
+        self.output_attention = output_attention
+        self.dropout = nn.Dropout(attention_dropout)
+        self.score_linear = nn.Linear(2 * (d_model // n_heads), 1)
+
+    def forward(self, queries, keys, values, attn_mask, tau=None, delta=None):
+        '''
+        Input shape:
+            q               : [B, L, H, d_k]
+            k               : [B, S, H, d_k]
+            v               : [B, S, H, d_k]
+        Output shape:
+            output  :   [B, L, H, d_v]
+            weights :   [B, H, L, S]
+            scores  :   [B, H, L, S]
+        '''
+        B, L, H, E = queries.shape
+        _, S, _, D = values.shape
+        q = queries.transpose(1,2)                      # [B, H, L, d_k]
+        k = keys.transpose(1,2)                         # [B, H, S, d_k]
+        v = values.transpose(1,2)                       # [B, H, S, d_k]
+        scale = self.scale or 1. / sqrt(E)
+
+        q_k_concat = torch.cat([q.unsqueeze(3).repeat(1, 1, 1, S, 1), 
+                                k.unsqueeze(2).repeat(1, 1, L, 1, 1)], dim=-1)      # [B, H, L, S, 2*d_k]
+        scores = self.score_linear(self.linear(q_k_concat)).squeeze(-1) * scale              # (B, N, L, S)
+
+        if self.mask_flag:
+            if attn_mask is None:
+                attn_mask = TriangularCausalMask(B, L, device=queries.device)
+
+            scores.masked_fill_(attn_mask.mask, -np.inf)
+
+        weights = self.dropout(torch.softmax(scale * scores, dim=-1))
+        output = torch.matmul(weights, v).permute(0, 2, 1, 3)
+
+        if self.output_attention:
+            return output.contiguous(), weights
+        else:
+            return output.contiguous(), None
+        
+class BilinearAttention(nn.Module):
+    def __init__(self, d_model, n_heads=1, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
+        super(FullAttention, self).__init__()
+        self.scale = scale
+        self.mask_flag = mask_flag
+        self.output_attention = output_attention
+        self.dropout = nn.Dropout(attention_dropout)
+        self.bilinear_weight = nn.Parameter(torch.randn(d_model // n_heads, d_model // n_heads))
+
+    def forward(self, queries, keys, values, attn_mask, tau=None, delta=None):
+        '''
+        Input shape:
+            q               : [B, L, H, d_k]
+            k               : [B, S, H, d_k]
+            v               : [B, S, H, d_k]
+        Output shape:
+            output  :   [B, L, H, d_v]
+            weights :   [B, H, L, S]
+            scores  :   [B, H, L, S]
+        '''
+        B, L, H, E = queries.shape
+        _, S, _, D = values.shape
+        q = queries.transpose(1,2)                      # [B, H, L, d_k]
+        k = keys.permute(0,2,3,1)                       # [B, H, d_k, S]
+        v = values.transpose(1,2)                       # [B, H, S, d_k]
+        scale = self.scale or 1. / sqrt(E)
+
+        scores = torch.bmm(torch.bmm(q, self.bilinear_weight.unsqueeze(0).expand(B, -1, -1)), k) * scale
+
+        if self.mask_flag:
+            if attn_mask is None:
+                attn_mask = TriangularCausalMask(B, L, device=queries.device)
+
+            scores.masked_fill_(attn_mask.mask, -np.inf)
+
+        weights = self.dropout(torch.softmax(scale * scores, dim=-1))
+        output = torch.matmul(weights, v).permute(0, 2, 1, 3)
+
+        if self.output_attention:
+            return output.contiguous(), weights
+        else:
+            return output.contiguous(), None
+        
+class MinusAttention(nn.Module):
+    def __init__(self, d_model, n_heads=1, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
+        super(FullAttention, self).__init__()
+        self.scale = scale
+        self.mask_flag = mask_flag
+        self.output_attention = output_attention
+        self.dropout = nn.Dropout(attention_dropout)
+
+    def forward(self, queries, keys, values, attn_mask, tau=None, delta=None):
+        '''
+        Input shape:
+            q               : [B, L, H, d_k]
+            k               : [B, S, H, d_k]
+            v               : [B, S, H, d_k]
+        Output shape:
+            output  :   [B, L, H, d_v]
+            weights :   [B, H, L, S]
+            scores  :   [B, H, L, S]
+        '''
+        B, L, H, E = queries.shape
+        _, S, _, D = values.shape
+        q = queries.transpose(1,2)                      # [B, H, L, d_k]
+        k = keys.permute(0,2,3,1)                       # [B, H, d_k, S]
+        v = values.transpose(1,2)                       # [B, H, S, d_k]
+        scale = self.scale or 1. / sqrt(E)
+
+        scores = F.relu(q.unsqueeze(2) - k.unsqueeze(3)) * scale
+
+        if self.mask_flag:
+            if attn_mask is None:
+                attn_mask = TriangularCausalMask(B, L, device=queries.device)
+
+            scores.masked_fill_(attn_mask.mask, -np.inf)
+
+        weights = self.dropout(torch.softmax(scale * scores, dim=-1))
+        output = torch.matmul(weights, v).permute(0, 2, 1, 3)
+
+        if self.output_attention:
+            return output.contiguous(), weights
+        else:
+            return output.contiguous(), None
 
 class ProbAttention(nn.Module):
     def __init__(self, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
