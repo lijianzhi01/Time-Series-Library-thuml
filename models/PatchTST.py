@@ -53,52 +53,13 @@ class Model(nn.Module):
             [
                 EncoderLayer(
                     AttentionLayer(
-                        # FourierCrossAttentionW(in_channels=configs.d_model,
-                        #                  out_channels=configs.d_model,
-                        #                  seq_len_q=configs.seq_len,
-                        #                  seq_len_kv=configs.seq_len,
-                        #                  activation=configs.activation), 
-                        # WaveletAttention(in_channels=configs.d_model,
-                        #                  out_channels=configs.d_model,
-                        #                  seq_len_q=configs.seq_len,
-                        #                  seq_len_kv=configs.seq_len,
-                        #                  ich=configs.d_model,
-                        #                  T=1,
-                        #                  activation=configs.activation), 
-                        # FullAttention(False, 
-                        #               factor=configs.factor, 
-                        #               attention_dropout=configs.dropout,
-                        #               output_attention=configs.output_attention),
-                        # DotProductAttention(
-                        #     False, 
-                        #     factor=configs.factor, 
-                        #     attention_dropout=configs.dropout,
-                        #     output_attention=configs.output_attention
-                        # ),
-                        # ConcatAttention(
-                        #     d_model=configs.d_model,
-                        #     n_heads=configs.n_heads,
-                        #     mask_flag=False, 
-                        #     factor=configs.factor, 
-                        #     attention_dropout=configs.dropout,
-                        #     output_attention=configs.output_attention
-                        # ),
-                        # BilinearAttention(
-                        #     d_model=configs.d_model,
-                        #     n_heads=configs.n_heads,
-                        #     mask_flag=False, 
-                        #     factor=configs.factor, 
-                        #     attention_dropout=configs.dropout,
-                        #     output_attention=configs.output_attention
-                        # ),
-                        MinusAttention(
-                            d_model=configs.d_model,
-                            n_heads=configs.n_heads,
-                            mask_flag=False, 
-                            factor=configs.factor, 
-                            attention_dropout=configs.dropout,
-                            output_attention=configs.output_attention
-                        ),
+                        # FourierCrossAttentionW(in_channels=configs.d_model, out_channels=configs.d_model, seq_len_q=configs.seq_len, seq_len_kv=configs.seq_len, activation=configs.activation), 
+                        # WaveletAttention(in_channels=configs.d_model, out_channels=configs.d_model, seq_len_q=configs.seq_len, seq_len_kv=configs.seq_len, ich=configs.d_model, T=1, activation=configs.activation), 
+                        # FullAttention(False, factor=configs.factor, attention_dropout=configs.dropout,output_attention=configs.output_attention),
+                        # DotProductAttention(False, factor=configs.factor, attention_dropout=configs.dropout,output_attention=configs.output_attention),
+                        # ConcatAttention(d_model=configs.d_model,n_heads=configs.n_heads,mask_flag=False, factor=configs.factor, attention_dropout=configs.dropout,output_attention=configs.output_attention),
+                        # BilinearAttention(d_model=configs.d_model,n_heads=configs.n_heads,mask_flag=False, factor=configs.factor, attention_dropout=configs.dropout,output_attention=configs.output_attention),
+                        MinusAttention(d_model=configs.d_model, n_heads=configs.n_heads, mask_flag=False, factor=configs.factor, attention_dropout=configs.dropout, output_attention=configs.output_attention),
                         configs.d_model, configs.n_heads),
                     configs.d_model,
                     configs.d_ff,
