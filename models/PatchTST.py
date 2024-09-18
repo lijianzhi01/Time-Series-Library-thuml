@@ -66,12 +66,20 @@ class Model(nn.Module):
                         #                  T=1,
                         #                  activation=configs.activation), 
                         # FullAttention(False, 
-                        #               configs.factor, 
+                        #               factor=configs.factor, 
                         #               attention_dropout=configs.dropout,
                         #               output_attention=configs.output_attention),
-                        DotProductAttention(
+                        # DotProductAttention(
+                        #     False, 
+                        #     factor=configs.factor, 
+                        #     attention_dropout=configs.dropout,
+                        #     output_attention=configs.output_attention
+                        # ),
+                        ConcatAttention(
                             False, 
-                            configs.factor, 
+                            d_model=configs.d_model,
+                            n_heads=configs.n_heads,
+                            factor=configs.factor, 
                             attention_dropout=configs.dropout,
                             output_attention=configs.output_attention
                         ),
