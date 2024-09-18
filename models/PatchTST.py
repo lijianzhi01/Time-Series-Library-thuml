@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from layers.Transformer_EncDec import Encoder, EncoderLayer
-from layers.SelfAttention_Family import FullAttention, WaveletAttention, FourierCrossAttentionW, AttentionLayer
+from layers.SelfAttention_Family import FullAttention, WaveletAttention, FourierCrossAttentionW, AttentionLayer, WeightedAverageAttention, DotProductAttention, ConcatAttention, BilinearAttention, MinusAttention
 from layers.Embed import PatchEmbedding
 
 class Transpose(nn.Module):
@@ -69,6 +69,12 @@ class Model(nn.Module):
                         #               configs.factor, 
                         #               attention_dropout=configs.dropout,
                         #               output_attention=configs.output_attention),
+                        DotProductAttention(
+                            False, 
+                            configs.factor, 
+                            attention_dropout=configs.dropout,
+                            output_attention=configs.output_attention
+                        ),
                         configs.d_model, configs.n_heads),
                     configs.d_model,
                     configs.d_ff,
