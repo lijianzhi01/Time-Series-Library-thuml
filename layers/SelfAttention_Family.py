@@ -96,9 +96,7 @@ class WeightedAverageAttention(nn.Module):
         concat_out, _ = self.concat_attention(queries, keys, values, attn_mask)
         bilinear_out, _ = self.bilinear_attention(queries, keys, values, attn_mask)
         minus_out, _ = self.minus_attention(queries, keys, values, attn_mask)
-        print(minus_out.shape)
         weighted_output = self.weights[0] * dot_product_out + self.weights[1] * concat_out + self.weights[2] * bilinear_out + self.weights[3] * minus_out
-        print(weighted_output.shape)
         return weighted_output, []
         
 class DotProductAttention(nn.Module):
