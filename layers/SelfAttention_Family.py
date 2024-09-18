@@ -175,7 +175,7 @@ class ConcatAttention(nn.Module):
 
         q_k_concat = torch.cat([q.unsqueeze(3).repeat(1, 1, 1, S, 1), 
                                 k.unsqueeze(2).repeat(1, 1, L, 1, 1)], dim=-1)      # [B, H, L, S, 2*d_k]
-        scores = self.score_linear(self.linear(q_k_concat)).squeeze(-1) * scale              # (B, N, L, S)
+        scores = self.score_linear(q_k_concat).squeeze(-1) * scale              # (B, N, L, S)
 
         if self.mask_flag:
             if attn_mask is None:
