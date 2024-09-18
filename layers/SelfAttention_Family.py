@@ -96,12 +96,13 @@ class WeightedAverageAttention(nn.Module):
         concat_out, _ = self.concat_attention(queries, keys, values, attn_mask)
         bilinear_out, _ = self.bilinear_attention(queries, keys, values, attn_mask)
         minus_out, _ = self.minus_attention(queries, keys, values, attn_mask)
+        print(minus_out.shape)
 
         # Weighted Average Attenntion
-        attention_outputs = torch.stack([dot_product_out, concat_out, bilinear_out, minus_out])  # [4, B, L, H, d_v]
+        attention_outputs = torch.stack([dot_product_out, concat_out, bilinear_out, minus_out])  # [4, B, L, N, S]
         weights = F.softmax(self.weights, dim=0)
-        weighted_output = torch.tensordot(weights, attention_outputs, dims=0).squeeze(0)  # [B, L, H, d_v]
-
+        weighted_output = torch.tensordot(weights, attention_outputs, dims=0).squeeze(0)  # [B, L, N, S]
+        print(weighted_output.shape)
         return weighted_output, []
         
 class DotProductAttention(nn.Module):
@@ -184,7 +185,7 @@ class ConcatAttention(nn.Module):
             scores.masked_fill_(attn_mask.mask, -np.inf)
 
         weights = self.dropout(torch.softmax(scores, dim=-1))
-        output = torch.matmul(weights, v).permute(0, 2, 1, 3)
+        output = torch.matmul(weights, v).permute(0, 2, 1, 3)                       # [B, L, N, S]
 
         if self.output_attention:
             return output.contiguous(), weights
