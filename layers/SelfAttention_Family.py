@@ -99,10 +99,10 @@ class WeightedAverageAttention(nn.Module):
 
         # Weighted Average Attenntion
         attention_outputs = torch.stack([dot_product_out, concat_out, bilinear_out, minus_out])  # [4, B, L, H, d_v]
-        weights = F.softmax(self.weights, dim=0).unsqueeze(0)  # [1, 4]
-        weighted_output = (weights @ attention_outputs).squeeze(0)  # [B, L, H, d_v]
+        weights = F.softmax(self.weights, dim=0)
+        weighted_output = torch.tensordot(weights, attention_outputs, dims=0).squeeze(0)  # [B, L, H, d_v]
 
-        return weighted_output
+        return weighted_output, []
         
 class DotProductAttention(nn.Module):
     def __init__(self, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
