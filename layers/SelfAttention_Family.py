@@ -260,7 +260,8 @@ class MinusAttention(nn.Module):
         v = values.transpose(1,2)                       # [B, H, S, d_k]
         scale = self.scale or 1. / sqrt(E)
 
-        scores = F.relu(q.unsqueeze(2) - k.unsqueeze(3)) * scale
+        q_k_minus = q.unsqueeze(3).repeat(1, 1, 1, S, 1) - k.unsqueeze(2).repeat(1, 1, L, 1, 1)
+        scores = F.relu(q_k_minus.squeeze(-1)) * scale
 
         if self.mask_flag:
             if attn_mask is None:
