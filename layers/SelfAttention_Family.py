@@ -51,7 +51,7 @@ class DSAttention(nn.Module):
 
 class FullAttention(nn.Module):
     def __init__(self, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
-        super(FullAttention, self).__init__()
+        super(MinusAttention, self).__init__()
         self.scale = scale
         self.mask_flag = mask_flag
         self.output_attention = output_attention
@@ -106,7 +106,7 @@ class WeightedAverageAttention(nn.Module):
         
 class DotProductAttention(nn.Module):
     def __init__(self, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
-        super(FullAttention, self).__init__()
+        super(DotProductAttention, self).__init__()
         self.scale = scale
         self.mask_flag = mask_flag
         self.output_attention = output_attention
@@ -148,7 +148,7 @@ class DotProductAttention(nn.Module):
         
 class ConcatAttention(nn.Module):
     def __init__(self, d_model, n_heads=1, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
-        super(FullAttention, self).__init__()
+        super(ConcatAttention, self).__init__()
         self.scale = scale
         self.mask_flag = mask_flag
         self.output_attention = output_attention
@@ -193,7 +193,7 @@ class ConcatAttention(nn.Module):
         
 class BilinearAttention(nn.Module):
     def __init__(self, d_model, n_heads=1, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
-        super(FullAttention, self).__init__()
+        super(BilinearAttention, self).__init__()
         self.scale = scale
         self.mask_flag = mask_flag
         self.output_attention = output_attention
