@@ -217,8 +217,7 @@ class BilinearAttention(nn.Module):
         k = keys.permute(0,2,3,1)                       # [B, H, d_k, S]
         v = values.transpose(1,2)                       # [B, H, S, d_k]
         scale = self.scale or 1. / sqrt(E)
-
-        scores = torch.bmm(torch.bmm(q, self.bilinear_weight.unsqueeze(0).expand(B, -1, -1)), k) * scale
+        scores = torch.bmm(torch.bmm(q.reshape(B*H, L, E), self.bilinear_weight.unsqueeze(0).expand(B*H, -1, -1)), k.reshape(B*H, D, S)).reshape(B, H, L, S) * scale
 
         if self.mask_flag:
             if attn_mask is None:
