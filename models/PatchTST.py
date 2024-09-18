@@ -75,7 +75,15 @@ class Model(nn.Module):
                         #     attention_dropout=configs.dropout,
                         #     output_attention=configs.output_attention
                         # ),
-                        ConcatAttention(
+                        # ConcatAttention(
+                        #     d_model=configs.d_model,
+                        #     n_heads=configs.n_heads,
+                        #     mask_flag=False, 
+                        #     factor=configs.factor, 
+                        #     attention_dropout=configs.dropout,
+                        #     output_attention=configs.output_attention
+                        # ),
+                        BilinearAttention(
                             d_model=configs.d_model,
                             n_heads=configs.n_heads,
                             mask_flag=False, 
