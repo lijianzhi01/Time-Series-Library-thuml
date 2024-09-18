@@ -261,9 +261,10 @@ class MinusAttention(nn.Module):
         scale = self.scale or 1. / sqrt(E)
 
         q_k_minus = q.unsqueeze(3).repeat(1, 1, 1, S, 1) - k.unsqueeze(2).repeat(1, 1, L, 1, 1)
-        scores = F.relu(q_k_minus).squeeze(-1) * scale
         print("Shape of q: ", q.shape)
         print("Shape of k: ", k.shape)
+        print("Shape of q_k_minus: ", q_k_minus.shape)
+        scores = F.relu(q_k_minus).squeeze(-1) * scale
         print("Shape of scores: ", scores.shape)
         print("Shape of v: ", v.shape)
 
