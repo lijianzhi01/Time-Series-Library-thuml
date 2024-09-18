@@ -90,7 +90,7 @@ class WeightedAverageAttention(nn.Module):
 
         self.weights = nn.Parameter(torch.ones(4) / 4)
 
-    def forward(self, queries, keys, values, attn_mask):
+    def forward(self, queries, keys, values, attn_mask, tau=None, delta=None):
         # Ouput of each Attention
         dot_product_out, _ = self.dot_product_attention(queries, keys, values, attn_mask)
         concat_out, _ = self.concat_attention(queries, keys, values, attn_mask)
