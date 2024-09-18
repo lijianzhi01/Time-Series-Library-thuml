@@ -138,7 +138,7 @@ class DotProductAttention(nn.Module):
 
             scores.masked_fill_(attn_mask.mask, -np.inf)
 
-        weights = self.dropout(torch.softmax(scale * scores, dim=-1))
+        weights = self.dropout(torch.softmax(scores, dim=-1))
         output = torch.matmul(weights, v).permute(0, 2, 1, 3)
 
         if self.output_attention:
@@ -183,7 +183,7 @@ class ConcatAttention(nn.Module):
 
             scores.masked_fill_(attn_mask.mask, -np.inf)
 
-        weights = self.dropout(torch.softmax(scale * scores, dim=-1))
+        weights = self.dropout(torch.softmax(scores, dim=-1))
         output = torch.matmul(weights, v).permute(0, 2, 1, 3)
 
         if self.output_attention:
@@ -226,7 +226,7 @@ class BilinearAttention(nn.Module):
 
             scores.masked_fill_(attn_mask.mask, -np.inf)
 
-        weights = self.dropout(torch.softmax(scale * scores, dim=-1))
+        weights = self.dropout(torch.softmax(scores, dim=-1))
         output = torch.matmul(weights, v).permute(0, 2, 1, 3)
 
         if self.output_attention:
@@ -262,6 +262,10 @@ class MinusAttention(nn.Module):
 
         q_k_minus = q.unsqueeze(3).repeat(1, 1, 1, S, 1) - k.unsqueeze(2).repeat(1, 1, L, 1, 1)
         scores = F.relu(q_k_minus.squeeze(-1)) * scale
+        print("Shape of q: ", q.shape)
+        print("Shape of k: ", k.shape)
+        print("Shape of scores: ", scores.shape)
+        print("Shape of v: ", v.shape)
 
         if self.mask_flag:
             if attn_mask is None:
@@ -269,7 +273,7 @@ class MinusAttention(nn.Module):
 
             scores.masked_fill_(attn_mask.mask, -np.inf)
 
-        weights = self.dropout(torch.softmax(scale * scores, dim=-1))
+        weights = self.dropout(torch.softmax(scores, dim=-1))
         output = torch.matmul(weights, v).permute(0, 2, 1, 3)
 
         if self.output_attention:
