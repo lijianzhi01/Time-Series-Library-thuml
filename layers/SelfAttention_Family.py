@@ -241,6 +241,7 @@ class MinusAttention(nn.Module):
         self.mask_flag = mask_flag
         self.output_attention = output_attention
         self.dropout = nn.Dropout(attention_dropout)
+        self.score_linear = nn.Linear(d_model // n_heads, 1)
 
     def forward(self, queries, keys, values, attn_mask, tau=None, delta=None):
         '''
@@ -261,12 +262,7 @@ class MinusAttention(nn.Module):
         scale = self.scale or 1. / sqrt(E)
 
         q_k_minus = q.unsqueeze(3).repeat(1, 1, 1, S, 1) - k.unsqueeze(2).repeat(1, 1, L, 1, 1)
-        print("Shape of q: ", q.shape)
-        print("Shape of k: ", k.shape)
-        print("Shape of q_k_minus: ", q_k_minus.shape)
-        scores = F.relu(q_k_minus).squeeze(-1) * scale
-        print("Shape of scores: ", scores.shape)
-        print("Shape of v: ", v.shape)
+        scores = self.score_linear(q_k_minus).squeeze(-1) * scale       
 
         if self.mask_flag:
             if attn_mask is None:
