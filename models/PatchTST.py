@@ -76,9 +76,9 @@ class Model(nn.Module):
                         #     output_attention=configs.output_attention
                         # ),
                         ConcatAttention(
-                            False, 
                             d_model=configs.d_model,
                             n_heads=configs.n_heads,
+                            mask_flag=False, 
                             factor=configs.factor, 
                             attention_dropout=configs.dropout,
                             output_attention=configs.output_attention
