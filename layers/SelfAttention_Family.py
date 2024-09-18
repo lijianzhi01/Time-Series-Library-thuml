@@ -79,7 +79,7 @@ class FullAttention(nn.Module):
             return V.contiguous(), None
         
 class WeightedAverageAttention(nn.Module):
-    def __init__(self, d_model, n_heads=1, attention_dropout=0.1):
+    def __init__(self, d_model, n_heads=1, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
         super(WeightedAverageAttention, self).__init__()
         
         # Four kinds of Attention
