@@ -175,7 +175,7 @@ class ConcatAttention(nn.Module):
 
         q_k_concat = torch.cat([q.unsqueeze(3).repeat(1, 1, 1, S, 1), 
                                 k.unsqueeze(2).repeat(1, 1, L, 1, 1)], dim=-1)      # [B, H, L, S, 2*d_k]
-        scores = self.score_linear(q_k_concat).squeeze(-1) * scale              # (B, N, L, S)
+        scores = self.score_linear(q_k_concat).squeeze(-1) * scale                  # (B, N, L, S)
 
         if self.mask_flag:
             if attn_mask is None:
@@ -261,7 +261,7 @@ class MinusAttention(nn.Module):
         scale = self.scale or 1. / sqrt(E)
 
         q_k_minus = q.unsqueeze(3).repeat(1, 1, 1, S, 1) - k.unsqueeze(2).repeat(1, 1, L, 1, 1)
-        scores = F.relu(q_k_minus.squeeze(-1)) * scale
+        scores = F.relu(q_k_minus).squeeze(-1) * scale
         print("Shape of q: ", q.shape)
         print("Shape of k: ", k.shape)
         print("Shape of scores: ", scores.shape)
